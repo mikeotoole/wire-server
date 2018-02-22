@@ -184,14 +184,26 @@ addCode (usr ::: zcon ::: cnv) = do
     ensureConvMember (Data.convMembers conv) usr
     ensureAccess conv CodeAccess
     let (bots, users) = botsAndUsers $ Data.convMembers conv
-    c <- generate cnv ReusableCode (Timeout 3600 * 24 * 365) -- one year TODO: configurable
-    Data.insertCode c
-    now <- liftIO getCurrentTime
-    urlPrefix <- view $ options . optSettings . setConversationCodeURI
-    let res = mkConversationCode (codeKey c) (codeValue c) urlPrefix
-    let e = Event ConvCodeUpdate cnv usr now (Just $ EdConvCodeUpdate res)
-    pushEvent e users bots zcon
-    return $ json e & setStatus status200
+    key <- mkKey cnv
+    mCode <- Data.lookupCode key ReusableCode
+    case mCode of
+        Nothing -> do
+            c <- generate cnv ReusableCode (Timeout 3600 * 24 * 365) -- one year TODO: configurable
+            Data.insertCode c
+            now <- liftIO getCurrentTime
+            res <- createCode c
+            let e = Event ConvCodeUpdate cnv usr now (Just $ EdConvCodeUpdate res)
+            pushEvent e users bots zcon
+            return $ json e & setStatus status201
+        Just c -> do
+            res <- createCode c
+            return $ json res & setStatus status200
+  where
+    createCode :: Code -> Galley ConversationCode
+    createCode c = do
+        urlPrefix <- view $ options . optSettings . setConversationCodeURI
+        return $ mkConversationCode (codeKey c) (codeValue c) urlPrefix
+
 
 rmCode :: UserId ::: ConnId ::: ConvId -> Galley Response
 rmCode (usr ::: zcon ::: cnv) = do

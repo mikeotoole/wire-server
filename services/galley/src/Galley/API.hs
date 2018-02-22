@@ -508,8 +508,8 @@ sitemap = do
         summary "Create or recreate a conversation code"
         returns (ref Model.event)
         returns (ref Model.conversationCode)
-        response 200 "Conversation code created." (model Model.event)
-        response 204 "Conversation code already exists." (model Model.conversationCode)
+        response 201 "Conversation code created." (model Model.event)
+        response 200 "Conversation code already exists." (model Model.conversationCode)
         errorResponse Error.convNotFound
         errorResponse Error.invalidAccessOp
 
