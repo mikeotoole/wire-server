@@ -13,6 +13,7 @@ module Galley.API.Update
     , acceptConv
     , blockConv
     , unblockConv
+    , checkReusableCode
     , joinConversationById
     , joinConversationByReusableCode
     , addCode
@@ -219,6 +220,12 @@ returnCode c = do
     urlPrefix <- view $ options . optSettings . setConversationCodeURI
     let res = mkConversationCode (codeKey c) (codeValue c) urlPrefix
     return $ setStatus status200 . json $ res
+
+checkReusableCode :: Request ::: JSON -> Galley Response
+checkReusableCode (req ::: _) = do
+    convCode <- fromBody req invalidPayload
+    void $ Data.lookupCode (conversationKey convCode) ReusableCode >>= ifNothing codeNotFound
+    return empty
 
 joinConversationByReusableCode :: UserId ::: ConnId ::: Request ::: JSON -> Galley Response
 joinConversationByReusableCode (zusr ::: zcon ::: req ::: _) = do

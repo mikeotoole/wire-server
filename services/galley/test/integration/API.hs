@@ -392,6 +392,7 @@ postConvertCodeConv g b c _ = do
     -- Create/get/update/delete codes
     getConvCode g alice conv !!! const 404 === statusCode
     c1 <- decodeConvCodeEvent <$> postConvCode g alice conv
+    postConvCodeCheck g c1 !!! const 200 === statusCode
     c1' <- decodeConvCode <$> getConvCode g alice conv
     liftIO $ assertEqual "c1 c1' codes should match" c1 c1'
     c2 <- decodeConvCodeEvent <$> postConvCode g alice conv
